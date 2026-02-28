@@ -69,15 +69,24 @@ class JourneyListSerializer(JourneySerializer):
 
 class TicketSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
-        data = super(TicketSerializer, self).validate(attrs=attrs)
+        journey = attrs.get("journey")
+        cargo = attrs.get("cargo")
+        seat = attrs.get("seat")
+
+        if not journey:
+            raise serializers.ValidationError({"journey": "Journey is required"})
+
+        train = journey.train
+
         Ticket.validate_ticket(
-            attrs["cargo"],
-            attrs["seat"],
-            attrs["journey"].train.cargo_num,
-            attrs["journey"].train.places_in_cargo,
+            cargo,
+            seat,
+            train.cargo_num,
+            train.places_in_cargo,
             serializers.ValidationError,
         )
-        return data
+
+        return attrs
 
     class Meta:
         model = Ticket
@@ -96,5 +105,7 @@ class OrderSerializer(serializers.ModelSerializer):
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
+                journey = ticket_data["journey"]
+                Journey.objects.select_for_update().get(id=journey.id)
                 Ticket.objects.create(order=order, **ticket_data)
             return order

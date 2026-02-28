@@ -91,7 +91,10 @@ class TicketViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return Ticket.objects.filter(order__user=self.request.user)
+        return Ticket.objects.filter(order__user=self.request.user).select_related(
+            "journey__train",
+            "journey__route",
+        )
 
 
 class OrderViewSet(viewsets.ModelViewSet):
