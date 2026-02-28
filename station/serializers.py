@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Station, Route, TrainType, Train, Crew, Journey, Ticket, Order
 
@@ -68,6 +69,7 @@ class JourneyListSerializer(JourneySerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+
     def validate(self, attrs):
         journey = attrs.get("journey")
         cargo = attrs.get("cargo")
@@ -75,6 +77,11 @@ class TicketSerializer(serializers.ModelSerializer):
 
         if not journey:
             raise serializers.ValidationError({"journey": "Journey is required"})
+
+        if journey.departure_time < timezone.now():
+            raise serializers.ValidationError(
+                {"journey": "You cannot book tickets for a past journey."}
+            )
 
         train = journey.train
 
@@ -93,6 +100,14 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "cargo", "seat", "journey")
 
 
+class TicketRetrieveSerializer(TicketSerializer):
+    journey = JourneyListSerializer(read_only=True)
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "cargo", "seat", "journey")
+
+
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
@@ -101,9 +116,10 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ("id", "tickets", "created_at")
 
     def create(self, validated_data):
+        user = self.context["request"].user
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(**validated_data)
+            order = Order.objects.create(user=user, **validated_data)
 
             journey_ids = {t["journey"].id for t in tickets_data}
             Journey.objects.select_for_update().filter(id__in=journey_ids).exists()

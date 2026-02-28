@@ -16,6 +16,7 @@ from .serializers import (
     JourneyListSerializer,
     TicketSerializer,
     OrderSerializer,
+    TicketRetrieveSerializer,
 )
 
 
@@ -103,6 +104,10 @@ class TicketViewSet(viewsets.ModelViewSet):
             "journey__route",
         )
 
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return TicketRetrieveSerializer
+        return TicketSerializer
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related(

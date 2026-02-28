@@ -97,7 +97,7 @@ class Ticket(models.Model):
                 name="unique_ticket_journey_cargo_seat",
             )
         ]
-        ordering = ["cargo", "seat"]
+        ordering = ["id"]
 
     def __str__(self):
         return f"{self.journey}, Cargo: {self.cargo}, Seat: {self.seat}"
