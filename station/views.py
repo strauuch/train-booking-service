@@ -1,10 +1,16 @@
 from rest_framework import viewsets
-from .models import Station, Route, TrainType, Train, Crew
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import Station, Route, TrainType, Train, Crew, Journey
 from .serializers import (
     StationSerializer,
     RouteSerializer,
     RouteListSerializer,
-    TrainTypeSerializer, TrainSerializer, TrainListSerializer, CrewSerializer,
+    TrainTypeSerializer,
+    TrainSerializer,
+    TrainListSerializer,
+    CrewSerializer,
+    JourneySerializer,
+    JourneyListSerializer,
 )
 
 
@@ -53,3 +59,23 @@ class TrainViewSet(viewsets.ModelViewSet):
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
+
+
+class JourneyViewSet(viewsets.ModelViewSet):
+    queryset = Journey.objects.all()
+    serializer_class = JourneySerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ("route", "train")
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action in ("list", "retrieve"):
+            return queryset.select_related(
+                "route__source", "route__destination", "train__train_type"
+            ).prefetch_related("crew")
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return JourneyListSerializer
+        return JourneySerializer

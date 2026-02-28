@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "station",
     "user",
     "debug_toolbar",
+    "django_filters",
 ]
 
 MIDDLEWARE = [

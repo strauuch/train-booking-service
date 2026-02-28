@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Station, Route, TrainType, Train, Crew
+from .models import Station, Route, TrainType, Train, Crew, Journey
 
 
 class StationSerializer(serializers.ModelSerializer):
@@ -26,9 +26,18 @@ class TrainTypeSerializer(serializers.ModelSerializer):
 
 
 class TrainSerializer(serializers.ModelSerializer):
+    capacity = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Train
-        fields = ("id", "name", "cargo_num", "places_in_cargo", "train_type", "capacity")
+        fields = (
+            "id",
+            "name",
+            "cargo_num",
+            "places_in_cargo",
+            "train_type",
+            "capacity",
+        )
 
 
 class TrainListSerializer(TrainSerializer):
@@ -36,7 +45,22 @@ class TrainListSerializer(TrainSerializer):
         many=False, read_only=True, slug_field="name"
     )
 
+
 class CrewSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(read_only=True)
+
     class Meta:
         model = Crew
-        fields = ("id", "first_name", "last_name")
+        fields = ("id", "first_name", "last_name", "full_name")
+
+
+class JourneySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Journey
+        fields = ("id", "route", "train", "departure_time", "arrival_time", "crew")
+
+
+class JourneyListSerializer(JourneySerializer):
+    route = RouteListSerializer(read_only=True)
+    train = TrainListSerializer(read_only=True)
+    crew = CrewSerializer(many=True, read_only=True)
