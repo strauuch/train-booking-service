@@ -1,10 +1,10 @@
 from rest_framework import viewsets
-from .models import Station, Route, TrainType, Train
+from .models import Station, Route, TrainType, Train, Crew
 from .serializers import (
     StationSerializer,
     RouteSerializer,
     RouteListSerializer,
-    TrainTypeSerializer, TrainSerializer, TrainListSerializer,
+    TrainTypeSerializer, TrainSerializer, TrainListSerializer, CrewSerializer,
 )
 
 
@@ -48,3 +48,8 @@ class TrainViewSet(viewsets.ModelViewSet):
         if self.action in ("list", "retrieve"):
             return TrainListSerializer
         return TrainSerializer
+
+
+class CrewViewSet(viewsets.ModelViewSet):
+    queryset = Crew.objects.all()
+    serializer_class = CrewSerializer
