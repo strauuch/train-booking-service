@@ -25,3 +25,10 @@ class Route(models.Model):
 
     def __str__(self):
         return f"{self.source.name} - {self.destination.name}"
+
+
+class TrainType(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
