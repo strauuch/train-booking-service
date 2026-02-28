@@ -104,8 +104,19 @@ class OrderSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
             order = Order.objects.create(**validated_data)
+
+            journey_ids = {t["journey"].id for t in tickets_data}
+            Journey.objects.select_for_update().filter(id__in=journey_ids).exists()
+
             for ticket_data in tickets_data:
-                journey = ticket_data["journey"]
-                Journey.objects.select_for_update().get(id=journey.id)
+                if Ticket.objects.filter(
+                    journey=ticket_data["journey"],
+                    cargo=ticket_data["cargo"],
+                    seat=ticket_data["seat"],
+                ).exists():
+                    raise serializers.ValidationError(
+                        f"Seat {ticket_data['seat']} in cargo {ticket_data['cargo']} is already taken."
+                    )
+
                 Ticket.objects.create(order=order, **ticket_data)
             return order

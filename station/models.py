@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import UniqueConstraint
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 
 User = get_user_model()
 
@@ -44,8 +45,8 @@ class TrainType(models.Model):
 
 class Train(models.Model):
     name = models.CharField(max_length=255)
-    cargo_num = models.IntegerField()
-    places_in_cargo = models.IntegerField()
+    cargo_num = models.IntegerField(validators=[MinValueValidator(1)])
+    places_in_cargo = models.IntegerField(validators=[MinValueValidator(1)])
     train_type = models.ForeignKey(
         TrainType, on_delete=models.CASCADE, related_name="trains"
     )
