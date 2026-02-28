@@ -3,10 +3,11 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import (
     AbstractUser,
     UserManager as DjangoUserAdmin,
+    BaseUserManager,
 )
 
 
-class UserManager(DjangoUserAdmin):
+class UserManager(BaseUserManager):
 
     use_in_migrations = True
 
@@ -32,6 +33,8 @@ class UserManager(DjangoUserAdmin):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
 
+        extra_fields.pop("username", None)
+
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
 
@@ -47,6 +50,8 @@ class User(AbstractUser):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
+
+    objects = UserManager()
 
     def __str__(self):
         return self.email

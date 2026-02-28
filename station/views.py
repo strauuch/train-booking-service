@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Station, Route, TrainType, Train, Crew, Journey, Ticket
+from .models import Station, Route, TrainType, Train, Crew, Journey, Ticket, Order
 from .serializers import (
     StationSerializer,
     RouteSerializer,
@@ -14,6 +14,7 @@ from .serializers import (
     JourneySerializer,
     JourneyListSerializer,
     TicketSerializer,
+    OrderSerializer,
 )
 
 
@@ -91,3 +92,19 @@ class TicketViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Ticket.objects.filter(order__user=self.request.user)
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.prefetch_related(
+        "tickets__journey__train", "tickets__journey__route"
+    )
+    serializer_class = OrderSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).prefetch_related(
+            "tickets__journey__train", "tickets__journey__route"
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
