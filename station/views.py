@@ -1,6 +1,8 @@
 from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Station, Route, TrainType, Train, Crew, Journey
+from rest_framework.permissions import IsAuthenticated
+
+from .models import Station, Route, TrainType, Train, Crew, Journey, Ticket
 from .serializers import (
     StationSerializer,
     RouteSerializer,
@@ -11,6 +13,7 @@ from .serializers import (
     CrewSerializer,
     JourneySerializer,
     JourneyListSerializer,
+    TicketSerializer,
 )
 
 
@@ -79,3 +82,12 @@ class JourneyViewSet(viewsets.ModelViewSet):
         if self.action in ("list", "retrieve"):
             return JourneyListSerializer
         return JourneySerializer
+
+
+class TicketViewSet(viewsets.ModelViewSet):
+    queryset = Ticket.objects.select_related("journey__train", "journey__route")
+    serializer_class = TicketSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return Ticket.objects.filter(order__user=self.request.user)

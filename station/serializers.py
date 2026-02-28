@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Station, Route, TrainType, Train, Crew, Journey
+from .models import Station, Route, TrainType, Train, Crew, Journey, Ticket
 
 
 class StationSerializer(serializers.ModelSerializer):
@@ -64,3 +64,20 @@ class JourneyListSerializer(JourneySerializer):
     route = RouteListSerializer(read_only=True)
     train = TrainListSerializer(read_only=True)
     crew = CrewSerializer(many=True, read_only=True)
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        data = super(TicketSerializer, self).validate(attrs=attrs)
+        Ticket.validate_ticket(
+            attrs["cargo"],
+            attrs["seat"],
+            attrs["journey"].train.cargo_num,
+            attrs["journey"].train.places_in_cargo,
+            serializers.ValidationError,
+        )
+        return data
+
+    class Meta:
+        model = Ticket
+        fields = ("id", "cargo", "seat", "journey")
