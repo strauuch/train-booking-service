@@ -1,10 +1,10 @@
 from django.db import models
-
-# Create your models here.
-from django.db import models
+from django.db.models import UniqueConstraint
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
+
 
 class Station(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -16,12 +16,20 @@ class Station(models.Model):
 
 
 class Route(models.Model):
-    source = models.ForeignKey(Station, on_delete=models.CASCADE, related_name="route_source")
-    destination = models.ForeignKey(Station, on_delete=models.CASCADE, related_name="route_destination")
+    source = models.ForeignKey(
+        Station, on_delete=models.CASCADE, related_name="route_source"
+    )
+    destination = models.ForeignKey(
+        Station, on_delete=models.CASCADE, related_name="route_destination"
+    )
     distance = models.IntegerField()
 
     class Meta:
-        unique_together = ("source", "destination")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source", "destination"], name="unique_route_source_destination"
+            )
+        ]
 
     def __str__(self):
         return f"{self.source.name} - {self.destination.name}"
@@ -38,7 +46,9 @@ class Train(models.Model):
     name = models.CharField(max_length=255)
     cargo_num = models.IntegerField()
     places_in_cargo = models.IntegerField()
-    train_type = models.ForeignKey(TrainType, on_delete=models.CASCADE, related_name="trains")
+    train_type = models.ForeignKey(
+        TrainType, on_delete=models.CASCADE, related_name="trains"
+    )
 
     @property
     def capacity(self):
@@ -64,7 +74,63 @@ class Journey(models.Model):
     crew = models.ManyToManyField(Crew, related_name="journeys")
 
     def __str__(self):
-        return f"{self.route} at {self.departure_time}"\
+        return f"{self.route} at {self.departure_time}"
+
+
+class Ticket(models.Model):
+    cargo = models.IntegerField()
+    seat = models.IntegerField()
+    journey = models.ForeignKey(
+        Journey, on_delete=models.CASCADE, related_name="tickets"
+    )
+    order = models.ForeignKey("Order", on_delete=models.CASCADE, related_name="tickets")
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["journey", "cargo", "seat"],
+                name="unique_ticket_journey_cargo_seat",
+            )
+        ]
+        ordering = ["cargo", "seat"]
+
+    def __str__(self):
+        return f"{self.journey}, Cargo: {self.cargo}, Seat: {self.seat}"
+
+    @staticmethod
+    def validate_ticket(
+        cargo, seat, train_cargo_num, train_places_in_cargo, error_to_raise
+    ):
+        errors = {}
+
+        if not (1 <= cargo <= train_cargo_num):
+            errors["cargo"] = f"Cargo {cargo} is out of range"
+
+        if not (1 <= seat <= train_places_in_cargo):
+            errors["seat"] = f"Seat {seat} is out of range"
+
+        if errors:
+            raise error_to_raise(errors)
+
+    def clean(self):
+
+        if not self.journey_id:
+            return
+        train = self.journey.train
+        if not train:
+            return
+
+        Ticket.validate_ticket(
+            self.cargo,
+            self.seat,
+            self.journey.train.cargo_num,
+            self.journey.train.places_in_cargo,
+            ValidationError,
+        )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Order(models.Model):
