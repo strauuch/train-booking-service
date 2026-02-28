@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.utils import timezone
 from rest_framework import serializers
 from .models import Station, Route, TrainType, Train, Crew, Journey, Ticket, Order
@@ -116,23 +116,29 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ("id", "tickets", "created_at")
 
     def create(self, validated_data):
-        user = self.context["request"].user
+        tickets_data = validated_data.pop("tickets")
+
+        seen = set()
+        for t in tickets_data:
+            key = (t["journey"].id, t["cargo"], t["seat"])
+            if key in seen:
+                raise serializers.ValidationError(
+                    f"Duplicate seat {t['seat']} in cargo {t['cargo']} for this journey in request."
+                )
+            seen.add(key)
+
         with transaction.atomic():
-            tickets_data = validated_data.pop("tickets")
-            order = Order.objects.create(user=user, **validated_data)
+            order = Order.objects.create(**validated_data)
 
             journey_ids = {t["journey"].id for t in tickets_data}
             Journey.objects.select_for_update().filter(id__in=journey_ids).exists()
 
             for ticket_data in tickets_data:
-                if Ticket.objects.filter(
-                    journey=ticket_data["journey"],
-                    cargo=ticket_data["cargo"],
-                    seat=ticket_data["seat"],
-                ).exists():
+                try:
+                    Ticket.objects.create(order=order, **ticket_data)
+                except IntegrityError:
                     raise serializers.ValidationError(
                         f"Seat {ticket_data['seat']} in cargo {ticket_data['cargo']} is already taken."
                     )
 
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+        return order

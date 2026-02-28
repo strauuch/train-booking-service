@@ -96,7 +96,10 @@ class JourneyViewSet(viewsets.ModelViewSet):
 class TicketViewSet(viewsets.ModelViewSet):
     queryset = Ticket.objects.select_related("journey__train", "journey__route")
     serializer_class = TicketSerializer
-    permission_classes = (IsAuthenticated, IsOwner,)
+    permission_classes = (
+        IsAuthenticated,
+        IsOwner,
+    )
 
     def get_queryset(self):
         return Ticket.objects.filter(order__user=self.request.user).select_related(
@@ -105,16 +108,20 @@ class TicketViewSet(viewsets.ModelViewSet):
         )
 
     def get_serializer_class(self):
-        if self.action == "retrieve":
+        if self.action in ("list", "retrieve"):
             return TicketRetrieveSerializer
         return TicketSerializer
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related(
         "tickets__journey__train", "tickets__journey__route"
     )
     serializer_class = OrderSerializer
-    permission_classes = (IsAuthenticated, IsOwner,)
+    permission_classes = (
+        IsAuthenticated,
+        IsOwner,
+    )
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).prefetch_related(
