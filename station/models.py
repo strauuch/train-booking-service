@@ -13,3 +13,15 @@ class Station(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Route(models.Model):
+    source = models.ForeignKey(Station, on_delete=models.CASCADE, related_name="route_source")
+    destination = models.ForeignKey(Station, on_delete=models.CASCADE, related_name="route_destination")
+    distance = models.IntegerField()
+
+    class Meta:
+        unique_together = ("source", "destination")
+
+    def __str__(self):
+        return f"{self.source.name} - {self.destination.name}"
