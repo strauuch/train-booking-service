@@ -9,10 +9,16 @@ class StationViewSet(viewsets.ModelViewSet):
 
 
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.select_related("source", "destination")
+    queryset = Route.objects.all()
     serializer_class = RouteSerializer
 
     def get_serializer_class(self):
         if self.action in ("list", "retrieve"):
             return RouteListSerializer
         return RouteSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action in ("list", "retrieve"):
+            return Route.objects.select_related()
+        return queryset
