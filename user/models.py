@@ -1,13 +1,13 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import (
     AbstractUser,
-    UserManager as DjangoUserAdmin,
     BaseUserManager,
 )
+from django.db import models
+from django.utils.translation import gettext as _
 
 
 class UserManager(BaseUserManager):
+    """Define a model manager for User model with no username field."""
 
     use_in_migrations = True
 
@@ -15,7 +15,6 @@ class UserManager(BaseUserManager):
         """Create and save a User with the given email and password."""
         if not email:
             raise ValueError("The given email must be set")
-
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -33,11 +32,8 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
 
-        extra_fields.pop("username", None)
-
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
-
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
 
@@ -46,12 +42,9 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     username = None
-    email = models.EmailField(unique=True)
+    email = models.EmailField(_("email address"), unique=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = UserManager()
-
-    def __str__(self):
-        return self.email
