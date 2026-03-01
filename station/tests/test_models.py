@@ -24,50 +24,27 @@ class ModelTests(TestCase):
 
     def setUp(self):
         """Set up initial data for tests."""
-        self.user = User.objects.create_user(
-            email="test@test.com",
-            password="password"
-        )
-
+        self.user = User.objects.create_user(email="test@test.com", password="password")
         self.station1 = Station.objects.create(
-            name="Station A",
-            latitude=10.0,
-            longitude=10.0
+            name="Station A", latitude=10.0, longitude=10.0
         )
-
         self.station2 = Station.objects.create(
-            name="Station B",
-            latitude=20.0,
-            longitude=20.0
+            name="Station B", latitude=20.0, longitude=20.0
         )
-
         self.train_type = TrainType.objects.create(name="Express")
-
         self.train = Train.objects.create(
-            name="Polar",
-            cargo_num=2,
-            places_in_cargo=10,
-            train_type=self.train_type
+            name="Polar", cargo_num=2, places_in_cargo=10, train_type=self.train_type
         )
-
-        self.crew = Crew.objects.create(
-            first_name="John",
-            last_name="Doe"
-        )
-
+        self.crew = Crew.objects.create(first_name="John", last_name="Doe")
         self.route = Route.objects.create(
-            source=self.station1,
-            destination=self.station2,
-            distance=100
+            source=self.station1, destination=self.station2, distance=100
         )
-
         self.journey = Journey.objects.create(
             route=self.route,
             train=self.train,
             departure_time=timezone.now() + timedelta(days=1),
-            arrival_time=timezone.now() + timedelta(days=1, hours=2)
+            arrival_time=timezone.now() + timedelta(days=1, hours=2),
         )
-
         self.order = Order.objects.create(user=self.user)
 
     def test_station_str(self):
@@ -89,10 +66,7 @@ class ModelTests(TestCase):
     def test_train_min_value_validation(self):
         """Test that train cargo_num cannot be less than 1."""
         train = Train(
-            name="Invalid",
-            cargo_num=0,
-            places_in_cargo=10,
-            train_type=self.train_type
+            name="Invalid", cargo_num=0, places_in_cargo=10, train_type=self.train_type
         )
         with self.assertRaises(ValidationError):
             train.full_clean()
@@ -103,7 +77,7 @@ class ModelTests(TestCase):
             route=self.route,
             train=self.train,
             departure_time=timezone.now(),
-            arrival_time=timezone.now() - timedelta(hours=1)
+            arrival_time=timezone.now() - timedelta(hours=1),
         )
         with self.assertRaises(ValidationError):
             journey.full_clean()
@@ -118,35 +92,21 @@ class ModelTests(TestCase):
         """Test Route source-destination uniqueness."""
         with self.assertRaises(IntegrityError):
             Route.objects.create(
-                source=self.station1,
-                destination=self.station2,
-                distance=200
+                source=self.station1, destination=self.station2, distance=200
             )
 
     def test_ticket_validation_range_error(self):
         """Test Ticket seat/cargo range validation."""
         ticket = Ticket(
-            journey=self.journey,
-            order=self.order,
-            cargo=3,   # invalid (max 2)
-            seat=1
+            journey=self.journey, order=self.order, cargo=3, seat=1  # invalid (max 2)
         )
         with self.assertRaises(ValidationError):
             ticket.full_clean()
 
     def test_ticket_unique_constraint_db(self):
         """Database unique constraint validation via full_clean."""
-        Ticket.objects.create(
-            journey=self.journey,
-            order=self.order,
-            cargo=1,
-            seat=1
-        )
-
+        Ticket.objects.create(journey=self.journey, order=self.order, cargo=1, seat=1)
         with self.assertRaises(ValidationError):
             Ticket.objects.create(
-                journey=self.journey,
-                order=self.order,
-                cargo=1,
-                seat=1
+                journey=self.journey, order=self.order, cargo=1, seat=1
             )

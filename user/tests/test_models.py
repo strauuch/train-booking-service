@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class UserManagerTests(TestCase):
     def test_create_user(self):
         """Test creating a regular user"""
@@ -37,26 +38,23 @@ class UserManagerTests(TestCase):
         """Test error when creating a superuser with incorrect permissions"""
         with self.assertRaises(ValueError):
             User.objects.create_superuser(
-                email="bad_admin@example.com",
-                password="password123",
-                is_staff=False
+                email="bad_admin@example.com", password="password123", is_staff=False
             )
         with self.assertRaises(ValueError):
             User.objects.create_superuser(
                 email="bad_admin2@example.com",
                 password="password123",
-                is_superuser=False
+                is_superuser=False,
             )
 
     def test_email_normalization(self):
         user = User.objects.create_user(
-            email="TEST@EXAMPLE.COM",
-            password="password123"
+            email="TEST@EXAMPLE.COM", password="password123"
         )
         self.assertEqual(user.email, "TEST@example.com")
 
     def test_create_user_with_duplicate_email(self):
         """Test that creating a user with an existing email raises an error"""
         User.objects.create_user(email="test@example.com", password="password123")
-        with self.assertRaises(Exception): # Или IntegrityError
+        with self.assertRaises(Exception):  # Или IntegrityError
             User.objects.create_user(email="test@example.com", password="password456")

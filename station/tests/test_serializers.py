@@ -4,12 +4,29 @@ from django.utils import timezone
 from django.db.models import Count
 from datetime import timedelta
 from rest_framework.exceptions import ValidationError
-from station.models import Station, Route, TrainType, Train, Crew, Journey, Ticket, Order
+from station.models import (
+    Station,
+    Route,
+    TrainType,
+    Train,
+    Crew,
+    Journey,
+    Ticket,
+    Order,
+)
 from station.serializers import (
-    StationSerializer, RouteSerializer, RouteListSerializer,
-    TrainTypeSerializer, TrainSerializer, TrainListSerializer,
-    CrewSerializer, JourneySerializer, JourneyListSerializer,
-    TicketSerializer, TicketRetrieveSerializer, OrderSerializer,
+    StationSerializer,
+    RouteSerializer,
+    RouteListSerializer,
+    TrainTypeSerializer,
+    TrainSerializer,
+    TrainListSerializer,
+    CrewSerializer,
+    JourneySerializer,
+    JourneyListSerializer,
+    TicketSerializer,
+    TicketRetrieveSerializer,
+    OrderSerializer,
 )
 from user.models import User
 
@@ -20,32 +37,40 @@ class SerializerTests(TestCase):
         self.station1 = Station.objects.create(name="A", latitude=10.0, longitude=10.0)
         self.station2 = Station.objects.create(name="B", latitude=20.0, longitude=20.0)
         self.train_type = TrainType.objects.create(name="Express")
-        self.train = Train.objects.create(name="Polar", cargo_num=2, places_in_cargo=10, train_type=self.train_type)
+        self.train = Train.objects.create(
+            name="Polar", cargo_num=2, places_in_cargo=10, train_type=self.train_type
+        )
         self.crew = Crew.objects.create(first_name="John", last_name="Doe")
-        self.route = Route.objects.create(source=self.station1, destination=self.station2, distance=100)
-
+        self.route = Route.objects.create(
+            source=self.station1, destination=self.station2, distance=100
+        )
         self.journey = Journey.objects.create(
-            route=self.route, train=self.train,
+            route=self.route,
+            train=self.train,
             departure_time=timezone.now() + timedelta(days=1),
-            arrival_time=timezone.now() + timedelta(days=1, hours=2)
+            arrival_time=timezone.now() + timedelta(days=1, hours=2),
         )
         self.journey.crew.add(self.crew)
-
         self.past_journey = Journey.objects.create(
-            route=self.route, train=self.train,
+            route=self.route,
+            train=self.train,
             departure_time=timezone.now() - timedelta(days=2),
-            arrival_time=timezone.now() - timedelta(days=1)
+            arrival_time=timezone.now() - timedelta(days=1),
         )
 
     def test_station_serializer_fields(self):
         """Validate StationSerializer contains the correct fields."""
         serializer = StationSerializer(self.station1)
-        self.assertEqual(set(serializer.data.keys()), {"id", "name", "latitude", "longitude"})
+        self.assertEqual(
+            set(serializer.data.keys()), {"id", "name", "latitude", "longitude"}
+        )
 
     def test_route_serializer_fields(self):
         """Validate RouteSerializer basic fields."""
         serializer = RouteSerializer(self.route)
-        self.assertEqual(set(serializer.data.keys()), {"id", "source", "destination", "distance"})
+        self.assertEqual(
+            set(serializer.data.keys()), {"id", "source", "destination", "distance"}
+        )
 
     def test_route_list_serializer_nested_representation(self):
         """Validate RouteListSerializer correctly nests StationSerializer."""
@@ -61,7 +86,10 @@ class SerializerTests(TestCase):
     def test_train_serializer_fields(self):
         """Validate TrainSerializer fields."""
         serializer = TrainSerializer(self.train)
-        self.assertEqual(set(serializer.data.keys()), {"id", "name", "cargo_num", "places_in_cargo", "train_type", "capacity"})
+        self.assertEqual(
+            set(serializer.data.keys()),
+            {"id", "name", "cargo_num", "places_in_cargo", "train_type", "capacity"},
+        )
 
     def test_train_serializer_capacity_readonly(self):
         """Ensure capacity field is read-only and reflects the calculation."""
@@ -76,7 +104,9 @@ class SerializerTests(TestCase):
     def test_crew_serializer_fields(self):
         """Validate CrewSerializer fields."""
         serializer = CrewSerializer(self.crew)
-        self.assertEqual(set(serializer.data.keys()), {"id", "first_name", "last_name", "full_name"})
+        self.assertEqual(
+            set(serializer.data.keys()), {"id", "first_name", "last_name", "full_name"}
+        )
 
     def test_crew_serializer_full_name_readonly(self):
         """Ensure full_name is read-only."""
@@ -86,7 +116,10 @@ class SerializerTests(TestCase):
     def test_journey_serializer_fields(self):
         """Validate JourneySerializer fields."""
         serializer = JourneySerializer(self.journey)
-        self.assertEqual(set(serializer.data.keys()), {"id", "route", "train", "departure_time", "arrival_time", "crew"})
+        self.assertEqual(
+            set(serializer.data.keys()),
+            {"id", "route", "train", "departure_time", "arrival_time", "crew"},
+        )
 
     def test_journey_serializer_validation_arrival_time(self):
         """Ensure validation fails if arrival_time is not after departure_time."""
@@ -110,9 +143,16 @@ class SerializerTests(TestCase):
 
     def test_ticket_serializer_fields(self):
         """Validate TicketSerializer fields."""
-        ticket = Ticket.objects.create(journey=self.journey, cargo=1, seat=1, order=Order.objects.create(user=self.user))
+        ticket = Ticket.objects.create(
+            journey=self.journey,
+            cargo=1,
+            seat=1,
+            order=Order.objects.create(user=self.user),
+        )
         serializer = TicketSerializer(ticket)
-        self.assertEqual(set(serializer.data.keys()), {"id", "cargo", "seat", "journey"})
+        self.assertEqual(
+            set(serializer.data.keys()), {"id", "cargo", "seat", "journey"}
+        )
 
     def test_ticket_serializer_journey_required(self):
         """Ensure validation fails if journey field is missing."""
@@ -138,7 +178,12 @@ class SerializerTests(TestCase):
 
     def test_ticket_retrieve_serializer_nested_representation(self):
         """Validate TicketRetrieveSerializer nests full JourneyListSerializer data."""
-        ticket = Ticket.objects.create(journey=self.journey, cargo=1, seat=1, order=Order.objects.create(user=self.user))
+        ticket = Ticket.objects.create(
+            journey=self.journey,
+            cargo=1,
+            seat=1,
+            order=Order.objects.create(user=self.user),
+        )
         serializer = TicketRetrieveSerializer(ticket)
         self.assertIsInstance(serializer.data["journey"], dict)
         self.assertIn("route", serializer.data["journey"])
@@ -146,14 +191,19 @@ class SerializerTests(TestCase):
     def test_order_serializer_fields(self):
         """Validate OrderSerializer fields including read-only tickets_count."""
         Order.objects.create(user=self.user)
-        order = Order.objects.annotate(tickets_count=Count("tickets")).get(user=self.user)
+        order = Order.objects.annotate(tickets_count=Count("tickets")).get(
+            user=self.user
+        )
         serializer = OrderSerializer(order)
         expected_fields = {"id", "tickets", "created_at", "tickets_count"}
         self.assertTrue(expected_fields.issubset(serializer.data.keys()))
 
     def test_order_serializer_tickets_count_is_readonly(self):
         """Ensure tickets_count is read-only and not accepted in input."""
-        data = {"tickets": [{"journey": self.journey.id, "cargo": 1, "seat": 1}], "tickets_count": 99}
+        data = {
+            "tickets": [{"journey": self.journey.id, "cargo": 1, "seat": 1}],
+            "tickets_count": 99,
+        }
         serializer = OrderSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         order = serializer.save(user=self.user)
@@ -164,7 +214,7 @@ class SerializerTests(TestCase):
         data = {
             "tickets": [
                 {"journey": self.journey.id, "cargo": 1, "seat": 1},
-                {"journey": self.journey.id, "cargo": 1, "seat": 1}
+                {"journey": self.journey.id, "cargo": 1, "seat": 1},
             ]
         }
         serializer = OrderSerializer(data=data)
@@ -187,8 +237,10 @@ class SerializerTests(TestCase):
     def test_order_serializer_integrity_error_on_taken_seat(self):
         """Verify that taken seats raise ValidationError."""
         Ticket.objects.create(
-            journey=self.journey, cargo=1, seat=1,
-            order=Order.objects.create(user=self.user)
+            journey=self.journey,
+            cargo=1,
+            seat=1,
+            order=Order.objects.create(user=self.user),
         )
         data = {"tickets": [{"journey": self.journey.id, "cargo": 1, "seat": 1}]}
         serializer = OrderSerializer(data=data)

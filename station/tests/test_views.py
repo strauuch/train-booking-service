@@ -6,19 +6,28 @@ from station.models import *
 
 User = get_user_model()
 
+
 class UltimateViewSetTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.admin = User.objects.create_superuser("admin@test.com", "pass")
         self.user = User.objects.create_user("user@test.com", "pass")
         self.stranger = User.objects.create_user("stranger@test.com", "pass")
-
         self.s1 = Station.objects.create(name="A", latitude=0, longitude=0)
         self.s2 = Station.objects.create(name="B", latitude=1, longitude=1)
         self.tt = TrainType.objects.create(name="Express")
-        self.train = Train.objects.create(name="T", cargo_num=1, places_in_cargo=10, train_type=self.tt)
-        self.route = Route.objects.create(source=self.s1, destination=self.s2, distance=100)
-        self.journey = Journey.objects.create(route=self.route, train=self.train, departure_time="2026-03-05 10:00:00", arrival_time="2026-03-05 12:00:00")
+        self.train = Train.objects.create(
+            name="T", cargo_num=1, places_in_cargo=10, train_type=self.tt
+        )
+        self.route = Route.objects.create(
+            source=self.s1, destination=self.s2, distance=100
+        )
+        self.journey = Journey.objects.create(
+            route=self.route,
+            train=self.train,
+            departure_time="2026-03-05 10:00:00",
+            arrival_time="2026-03-05 12:00:00",
+        )
 
     def _get_data(self, response):
         return response.data.get("results", response.data)
@@ -40,11 +49,15 @@ class UltimateViewSetTests(TestCase):
         """Verify that retrieve uses different/nested serializers."""
         self.client.force_authenticate(self.user)
         # Check Route
-        res_route = self.client.get(reverse("station:route-detail", kwargs={"pk": self.route.id}))
-        self.assertIsInstance(res_route.data["source"], dict) # Should be nested dict
+        res_route = self.client.get(
+            reverse("station:route-detail", kwargs={"pk": self.route.id})
+        )
+        self.assertIsInstance(res_route.data["source"], dict)  # Should be nested dict
 
         # Check Journey
-        res_journey = self.client.get(reverse("station:journey-detail", kwargs={"pk": self.journey.id}))
+        res_journey = self.client.get(
+            reverse("station:journey-detail", kwargs={"pk": self.journey.id})
+        )
         self.assertIsInstance(res_journey.data["route"], dict)
 
     # --- PERMISSIONS (Forbidden & Isolation) ---
@@ -52,12 +65,20 @@ class UltimateViewSetTests(TestCase):
         """Verify strict permission adherence."""
         self.client.force_authenticate(self.user)
         # Train create
-        self.assertEqual(self.client.post(reverse("station:train-list"), {"name": "T"}).status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            self.client.post(reverse("station:train-list"), {"name": "T"}).status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
 
         # Order retrieve forbidden for stranger
         order = Order.objects.create(user=self.user)
         self.client.force_authenticate(self.stranger)
-        self.assertEqual(self.client.get(reverse("station:order-detail", kwargs={"pk": order.id})).status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            self.client.get(
+                reverse("station:order-detail", kwargs={"pk": order.id})
+            ).status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
 
     # --- OPTIMIZATION ---
     def test_queryset_optimizations(self):
@@ -65,11 +86,11 @@ class UltimateViewSetTests(TestCase):
         self.client.force_authenticate(self.user)
 
         for i in range(5):
-            station_new = Station.objects.create(name=f"Station_{i}", latitude=i, longitude=i)
+            station_new = Station.objects.create(
+                name=f"Station_{i}", latitude=i, longitude=i
+            )
             Route.objects.create(
-                source=self.s1,
-                destination=station_new,
-                distance=100 + i
+                source=self.s1, destination=station_new, distance=100 + i
             )
 
         with self.assertNumQueries(2):
@@ -81,7 +102,9 @@ class UltimateViewSetTests(TestCase):
         order_user = Order.objects.create(user=self.user)
         order_stranger = Order.objects.create(user=self.stranger)
         Ticket.objects.create(order=order_user, journey=self.journey, cargo=1, seat=1)
-        Ticket.objects.create(order=order_stranger, journey=self.journey, cargo=1, seat=2)
+        Ticket.objects.create(
+            order=order_stranger, journey=self.journey, cargo=1, seat=2
+        )
 
         self.client.force_authenticate(self.user)
         res = self.client.get(reverse("station:ticket-list"))
