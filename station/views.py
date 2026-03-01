@@ -23,7 +23,8 @@ from .serializers import (
     JourneyListSerializer,
     TicketSerializer,
     OrderSerializer,
-    TicketRetrieveSerializer,
+    TicketListSerializer,
+    OrderListSerializer,
 )
 
 
@@ -181,8 +182,8 @@ class TicketViewSet(viewsets.ModelViewSet):
         )
 
     def get_serializer_class(self):
-        if self.action == "retrieve":
-            return TicketRetrieveSerializer
+        if self.action in ("list", "retrieve"):
+            return TicketListSerializer
         return TicketSerializer
 
 
@@ -213,3 +214,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return OrderListSerializer
+        return OrderSerializer

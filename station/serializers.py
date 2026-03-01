@@ -112,7 +112,7 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "cargo", "seat", "journey")
 
 
-class TicketRetrieveSerializer(TicketSerializer):
+class TicketListSerializer(TicketSerializer):
     journey = JourneyListSerializer(read_only=True)
 
     class Meta:
@@ -153,3 +153,7 @@ class OrderSerializer(serializers.ModelSerializer):
                     )
 
         return order
+
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketListSerializer(many=True, read_only=True)
