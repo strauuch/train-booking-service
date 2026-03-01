@@ -20,21 +20,21 @@ class AdminTests(TestCase):
         """Test Station model registered in admin site."""
         self.assertIn(Station, site._registry)
         admin_class = site._registry.get(Station)
-        self.assertEqual(admin_class.list_display, ("name", "latitude", "longitude"))
+        self.assertEqual(admin_class.list_display, ("id", "name", "latitude", "longitude"))
 
     def test_route_admin_registered(self):
         """Test Route model registered in admin site."""
         self.assertIn(Route, site._registry)
         admin_class = site._registry.get(Route)
         self.assertEqual(
-            admin_class.list_display, ("source", "destination", "distance")
+            admin_class.list_display, ("id", "source", "destination", "distance")
         )
 
     def test_train_admin_registered(self):
         """Test Train model registered in admin site."""
         self.assertIn(Train, site._registry)
         admin_class = site._registry.get(Train)
-        expected = ("name", "train_type", "cargo_num", "places_in_cargo", "capacity")
+        expected = ("id", "name", "cargo_num", "places_in_cargo", "train_type", "capacity")
         self.assertEqual(admin_class.list_display, expected)
 
     def test_crew_admin_readonly_fields(self):
@@ -43,7 +43,7 @@ class AdminTests(TestCase):
         admin_class = site._registry.get(Crew)
         self.assertIn("full_name", admin_class.readonly_fields)
         self.assertEqual(
-            admin_class.list_display, ("first_name", "last_name", "full_name")
+            admin_class.list_display, ("id", "first_name", "last_name", "full_name")
         )
 
     def test_journey_admin_configuration(self):
@@ -52,7 +52,7 @@ class AdminTests(TestCase):
         admin_class = site._registry.get(Journey)
         self.assertEqual(
             admin_class.list_display,
-            ("route", "train", "departure_time", "arrival_time"),
+            ("id", "route", "train", "departure_time", "arrival_time"),
         )
         self.assertEqual(admin_class.list_filter, ("route", "train"))
         self.assertIn("crew", admin_class.filter_horizontal)

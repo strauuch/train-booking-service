@@ -25,7 +25,7 @@ from station.serializers import (
     JourneySerializer,
     JourneyListSerializer,
     TicketSerializer,
-    TicketRetrieveSerializer,
+    TicketListSerializer,
     OrderSerializer,
 )
 from user.models import User
@@ -184,7 +184,7 @@ class SerializerTests(TestCase):
             seat=1,
             order=Order.objects.create(user=self.user),
         )
-        serializer = TicketRetrieveSerializer(ticket)
+        serializer = TicketListSerializer(ticket)
         self.assertIsInstance(serializer.data["journey"], dict)
         self.assertIn("route", serializer.data["journey"])
 
