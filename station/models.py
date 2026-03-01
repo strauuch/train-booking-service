@@ -45,8 +45,8 @@ class TrainType(models.Model):
 
 class Train(models.Model):
     name = models.CharField(max_length=255)
-    cargo_num = models.IntegerField(validators=[MinValueValidator(1)])
-    places_in_cargo = models.IntegerField(validators=[MinValueValidator(1)])
+    cargo_num = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    places_in_cargo = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     train_type = models.ForeignKey(
         TrainType, on_delete=models.CASCADE, related_name="trains"
     )
@@ -81,10 +81,21 @@ class Journey(models.Model):
     def __str__(self):
         return f"{self.route} at {self.departure_time}"
 
+    def clean(self):
+        super().clean()
+        if self.departure_time and self.arrival_time:
+            if self.arrival_time <= self.departure_time:
+                raise ValidationError(
+                    {"arrival_time": "Arrival time must be after departure time."}
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 class Ticket(models.Model):
-    cargo = models.IntegerField()
-    seat = models.IntegerField()
+    cargo = models.PositiveIntegerField()
+    seat = models.PositiveIntegerField()
     journey = models.ForeignKey(
         Journey, on_delete=models.CASCADE, related_name="tickets"
     )

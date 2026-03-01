@@ -61,6 +61,18 @@ class JourneySerializer(serializers.ModelSerializer):
         model = Journey
         fields = ("id", "route", "train", "departure_time", "arrival_time", "crew")
 
+    def validate(self, attrs):
+        departure_time = attrs.get("departure_time")
+        arrival_time = attrs.get("arrival_time")
+
+        if departure_time and arrival_time:
+            if arrival_time <= departure_time:
+                raise serializers.ValidationError(
+                    {"arrival_time": "Arrival time must be after departure time."}
+                )
+
+        return attrs
+
 
 class JourneyListSerializer(JourneySerializer):
     route = RouteListSerializer(read_only=True)
@@ -110,10 +122,11 @@ class TicketRetrieveSerializer(TicketSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
+    tickets_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Order
-        fields = ("id", "tickets", "created_at")
+        fields = ("id", "tickets", "created_at", "tickets_count")
 
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
@@ -123,16 +136,14 @@ class OrderSerializer(serializers.ModelSerializer):
             key = (t["journey"].id, t["cargo"], t["seat"])
             if key in seen:
                 raise serializers.ValidationError(
-                    f"Duplicate seat {t['seat']} in cargo {t['cargo']} for this journey in request."
+                    f"Duplicate seat {t['seat']} in cargo {t['cargo']} for this journey."
                 )
             seen.add(key)
 
         with transaction.atomic():
-            order = Order.objects.create(**validated_data)
-
             journey_ids = {t["journey"].id for t in tickets_data}
-            Journey.objects.select_for_update().filter(id__in=journey_ids).exists()
-
+            list(Journey.objects.select_for_update().filter(id__in=journey_ids))
+            order = Order.objects.create(**validated_data)
             for ticket_data in tickets_data:
                 try:
                     Ticket.objects.create(order=order, **ticket_data)

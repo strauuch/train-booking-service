@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -32,7 +33,7 @@ class RouteViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
     def get_queryset(self):
-        queryset = self.queryset
+        queryset = Route.objects.all()
         if self.action in ("list", "retrieve"):
             return Route.objects.select_related("source", "destination")
         return queryset
@@ -126,7 +127,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user).prefetch_related(
             "tickets__journey__train", "tickets__journey__route"
-        )
+        ).annotate(tickets_count=Count("tickets"))
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
