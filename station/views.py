@@ -125,9 +125,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).prefetch_related(
-            "tickets__journey__train", "tickets__journey__route"
-        ).annotate(tickets_count=Count("tickets"))
+        return (
+            Order.objects.filter(user=self.request.user)
+            .prefetch_related("tickets__journey__train", "tickets__journey__route")
+            .annotate(tickets_count=Count("tickets"))
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

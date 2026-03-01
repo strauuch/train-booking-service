@@ -46,7 +46,9 @@ class TrainType(models.Model):
 class Train(models.Model):
     name = models.CharField(max_length=255)
     cargo_num = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
-    places_in_cargo = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
+    places_in_cargo = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1)]
+    )
     train_type = models.ForeignKey(
         TrainType, on_delete=models.CASCADE, related_name="trains"
     )
@@ -92,6 +94,7 @@ class Journey(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
 
 class Ticket(models.Model):
     cargo = models.PositiveIntegerField()
