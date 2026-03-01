@@ -1,5 +1,5 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from drf_spectacular.utils import extend_schema, extend_schema_view
@@ -15,6 +15,7 @@ from user.serializers import UserSerializer
 )
 class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
+    permission_classes = (AllowAny,)
 
 
 @extend_schema_view(
