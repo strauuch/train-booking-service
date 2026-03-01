@@ -14,12 +14,22 @@ class RouteAdmin(admin.ModelAdmin):
 
 @admin.register(TrainType)
 class TrainTypeAdmin(admin.ModelAdmin):
-    list_display = ("id", "name",)
+    list_display = (
+        "id",
+        "name",
+    )
 
 
 @admin.register(Train)
 class TrainAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "cargo_num", "places_in_cargo", "train_type", "capacity")
+    list_display = (
+        "id",
+        "name",
+        "cargo_num",
+        "places_in_cargo",
+        "train_type",
+        "capacity",
+    )
     list_filter = ("train_type",)
     readonly_fields = ("capacity",)
 
