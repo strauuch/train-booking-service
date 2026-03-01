@@ -197,7 +197,7 @@ class PermissionTests(TestCase):
 
         obj = MockObj(user=self.regular_user)
         request = self.factory.get("/")
-        request.user = None  # Аноним
+        request.user = None
 
         self.assertFalse(
             self.permission_owner.has_object_permission(
