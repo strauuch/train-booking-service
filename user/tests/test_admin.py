@@ -52,7 +52,6 @@ class CustomUserAdminTests(TestCase):
             ("Important dates", {"fields": ("last_login", "date_joined")}),
         )
 
-        # gettext_lazy(_) returns proxy object — convert to str
         actual = tuple(
             (str(name) if name is not None else None, data)
             for name, data in self.admin_class.fieldsets
